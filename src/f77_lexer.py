@@ -15,7 +15,7 @@ tokens = (
 
     # operators
     'PLUS', 'MINUS', 'MULT', 'DIV',
-    'EQ', 'NE', 'LT', 'LE', 'GT', 'GE',
+    'EQ', 'NE', 'LT', 'LE', 'GT', 'GE', 'AND', 'OR', 'NOT',
     'ASSIGN',
 
     # symbols
@@ -34,6 +34,9 @@ t_LT         = r'\.LT\.'
 t_LE         = r'\.LE\.'
 t_GT         = r'\.GT\.'
 t_GE         = r'\.GE\.'
+t_AND        = r'\.AND\.'
+t_OR         = r'\.OR\.'
+t_NOT        = r'\.NOT\.'
 t_ASSIGN     = r'='
 t_LPAREN     = r'\('
 t_RPAREN     = r'\)'
@@ -76,7 +79,7 @@ def t_ID(t):
 
 # numbers
 def t_FLOAT(t):
-    r'\d+\.\d*([Ee][+-]?\d+)?'
+    r'(\d+\.\d*|\.\d+)([Ee][+-]?\d+)?'
     t.value = float(t.value)
     return t
 
