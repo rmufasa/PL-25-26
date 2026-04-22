@@ -126,53 +126,60 @@ def p_continue_stmt(p):
     p[0] = Node('continue')
 
 # conditions 
-def p_condition_rel(p):
-    'condition : expression relop expression'
-    p[0] = Node('rel', p[2], p[1], p[3])
+def p_condition(p):
+    'condition : or_expr'
+    p[0] = p[1]
 
 
-def p_condition_and(p):
-    'condition : condition AND condition'
-    p[0] = Node('and', p[1], p[3])
+def p_or_expr(p):
+    '''or_expr : or_expr OR and_expr
+               | and_expr'''
+    if len(p) == 4:
+        p[0] = Node('or', p[1], p[3])
+    else:
+        p[0] = p[1]
 
+def p_and_expr(p):
+    '''and_expr : and_expr AND not_expr
+                | not_expr'''
+    if len(p) == 4:
+        p[0] = Node('and', p[1], p[3])
+    else:
+        p[0] = p[1]
 
-def p_condition_or(p):
-    'condition : condition OR condition'
-    p[0] = Node('or', p[1], p[3])
+def p_not_expr(p):
+    '''not_expr : NOT not_expr
+                | atom'''
+    if len(p) == 3:
+        p[0] = Node('not', p[2])
+    else:
+        p[0] = p[1]
 
+def p_atom(p):
+    '''atom : LPAREN condition RPAREN
+            | rel_expr'''
+    if len(p) == 4:
+        p[0] = p[2]   
+    else:
+        p[0] = p[1]
 
-def p_condition_not(p):
-    'condition : NOT condition'
-    p[0] = Node('not', p[2])
-
-
-def p_condition_paren(p):
-    'condition : LPAREN condition RPAREN'
-    p[0] = p[2]
+def p_rel_expr(p):
+    '''rel_expr : expression relop expression
+              | expression'''
+    if len(p) == 4:
+        p[0] = Node('rel', p[2], p[1], p[3])
+    else:
+        p[0] = p[1]
+         
 
 # relop
 def p_relop_eq(p):
-    'relop : EQ'
-    p[0] = p[1]
-
-def p_relop_ne(p):
-    'relop : NE'
-    p[0] = p[1]
-
-def p_relop_lt(p):
-    'relop : LT'
-    p[0] = p[1]
-
-def p_relop_le(p):
-    'relop : LE'
-    p[0] = p[1]
-
-def p_relop_gt(p):
-    'relop : GT'
-    p[0] = p[1]
-
-def p_relop_ge(p):
-    'relop : GE'
+    '''relop : EQ
+             | NE
+             | LT
+             | LE
+             | GT
+             | GE'''
     p[0] = p[1]
 
 # expressions
