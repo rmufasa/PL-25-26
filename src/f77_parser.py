@@ -157,15 +157,15 @@ def p_not_expr(p):
 
 def p_atom(p):
     '''atom : LPAREN condition RPAREN
-            | rel_expr'''
-    if len(p) == 4:
+            | rel_expr
+            | expression'''   # allows arithmetic expression as condition, enforce correctness later via semantic type checking
+    if len(p) == 4: 
         p[0] = p[2]   
     else:
         p[0] = p[1]
 
 def p_rel_expr(p):
-    '''rel_expr : expression relop expression
-              | expression'''
+    '''rel_expr : expression relop expression'''                   
     if len(p) == 4:
         p[0] = Node('rel', p[2], p[1], p[3])
     else:
@@ -250,8 +250,7 @@ def p_error(p):
         print("Syntax error at EOF")
 
 # build parser
-parser = yacc.yacc(debug=True)
-
+parser = yacc.yacc(debug=True, debugfile='parser.out')
 
 
 
