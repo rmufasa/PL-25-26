@@ -3,12 +3,6 @@ from f77_lexer import tokens
 from utils.AST import Node
 import sys
 
-precedence = (
-    ('left', 'OR'),
-    ('left', 'AND'),
-    ('right', 'NOT'),
-)
-
 start = 'program'
 
 # program
@@ -149,23 +143,15 @@ def p_and_expr(p):
 
 def p_not_expr(p):
     '''not_expr : NOT not_expr
-                | atom'''
+                | rel_expr'''
     if len(p) == 3:
         p[0] = Node('not', p[2])
     else:
         p[0] = p[1]
 
-def p_atom(p):
-    '''atom : LPAREN condition RPAREN
-            | rel_expr
-            | expression'''   # allows arithmetic expression as condition, enforce correctness later via semantic type checking
-    if len(p) == 4: 
-        p[0] = p[2]   
-    else:
-        p[0] = p[1]
-
 def p_rel_expr(p):
-    '''rel_expr : expression relop expression'''                   
+    '''rel_expr : expression relop expression
+                | expression'''                   
     if len(p) == 4:
         p[0] = Node('rel', p[2], p[1], p[3])
     else:
@@ -239,7 +225,7 @@ def p_factor(p):
 
 
 def p_factor_paren(p):
-    'factor : LPAREN expression RPAREN'
+    'factor : LPAREN condition RPAREN'
     p[0] = p[2]
 
 # error
