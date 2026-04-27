@@ -93,7 +93,7 @@ def p_more_exprs_empty(p):
 # do loop
 def p_do_loop(p):
     'do_loop : DO INT ID ASSIGN expression COMMA expression stmt_list INT CONTINUE'
-    p[0] = Node('do', p[2], p[3], p[5], p[7], p[8])
+    p[0] = Node('do', p[2], p[3], p[5], p[7], p[8], p[9])
 
 # if statement
 def p_if_stmt(p):
