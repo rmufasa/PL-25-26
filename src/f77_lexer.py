@@ -7,8 +7,7 @@ tokens = (
     'PROGRAM', 'INTEGER', 'REAL', 'LOGICAL',
     'IF', 'THEN', 'ELSE', 'ENDIF',
     'DO', 'CONTINUE', 'GOTO',
-    'READ', 'PRINT',
-    'FUNCTION', 'SUBROUTINE', 'RETURN', 'END',
+    'READ', 'PRINT', 'END',
 
     # indentifiers and constants
     'ID', 'INT', 'FLOAT', 'BOOL', 'STRING',
@@ -19,7 +18,7 @@ tokens = (
     'ASSIGN',
 
     # symbols
-    'LPAREN', 'RPAREN', 'COMMA', 'SEMICOLON'
+    'LPAREN', 'RPAREN', 'COMMA'
 )
 
 # operators and symbols
@@ -41,7 +40,6 @@ t_ASSIGN     = r'='
 t_LPAREN     = r'\('
 t_RPAREN     = r'\)'
 t_COMMA      = r','
-t_SEMICOLON  = r';'
 
 
 # keywords as functions 

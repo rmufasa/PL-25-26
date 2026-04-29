@@ -30,16 +30,25 @@ def p_type(p):
     p[0] = p[1]
 
 def p_id_list(p):
-    'id_list : ID more_ids'
+    'id_list : id_element more_ids'
     p[0] = Node('id_list', p[1], p[2])
 
 def p_more_ids_recursive(p):
-    'more_ids : COMMA ID more_ids'
+    'more_ids : COMMA id_element more_ids'
     p[0] = Node('more_ids', p[2], p[3])
 
 def p_more_ids_empty(p):
     'more_ids :'
     p[0] = Node('empty')
+
+def p_id_element(p):
+    '''id_element : ID 
+                  | ID LPAREN expr_list RPAREN'''
+    if len(p) == 2:
+        p[0] = Node('id', p[1])
+    else:
+        p[0] = Node('id_array', p[1], p[3])
+
 
 # statements
 def p_stmt_list_recursive(p):
@@ -50,15 +59,26 @@ def p_stmt_list_empty(p):
     'stmt_list :'
     p[0] = Node('empty')
 
-
 def p_statement(p):
-    '''statement : assignment
-                 | print_stmt
-                 | read_stmt
-                 | do_loop
-                 | if_stmt
-                 | goto_stmt
-                 | continue_stmt'''
+    'statement : opt_label basic_statement'
+    p[0] = Node('stmt', p[1], p[2])
+
+def p_opt_label(p):
+    '''opt_label : INT'''
+    p[0] = p[1]
+
+def p_opt_label_empty(p):
+    '''opt_label : '''
+    p[0] = Node('empty')
+
+def p_basic_statement(p):
+    '''basic_statement : assignment
+                           | print_stmt
+                           | read_stmt
+                           | do_loop
+                           | if_stmt
+                           | goto_stmt
+                           | continue_stmt'''
     p[0] = p[1]
 
 # assignment
@@ -215,18 +235,34 @@ def p_term_tail_empty(p):
     p[0] = []
 
 # factor 
-def p_factor(p):
-    '''factor : ID
-              | INT
-              | FLOAT
-              | BOOL
-              | STRING'''
-    p[0] = p[1]
+def p_factor_id(p):
+    'factor : ID'
+    p[0] = Node('id', p[1])
+
+def p_factor_int(p):
+    'factor : INT'
+    p[0] = Node('int', p[1])
+
+def p_factor_float(p):
+    'factor : FLOAT'
+    p[0] = Node('float', p[1])
+
+def p_factor_bool(p):
+    'factor : BOOL'
+    p[0] = Node('bool', p[1])
+
+def p_factor_string(p):
+    'factor : STRING'
+    p[0] = Node('string', p[1])
 
 
 def p_factor_paren(p):
     'factor : LPAREN condition RPAREN'
     p[0] = p[2]
+
+def p_factor_func(p):
+    'factor : ID LPAREN expr_list RPAREN'
+    p[0] = Node('call', p[1], p[3])
 
 # error
 def p_error(p):
