@@ -236,8 +236,8 @@ def p_term_tail_empty(p):
 
 # factor 
 def p_factor_id(p):
-    'factor : ID'
-    p[0] = Node('id', p[1])
+    'factor : id_element'
+    p[0] = p[1]
 
 def p_factor_int(p):
     'factor : INT'
@@ -259,10 +259,6 @@ def p_factor_string(p):
 def p_factor_paren(p):
     'factor : LPAREN condition RPAREN'
     p[0] = p[2]
-
-def p_factor_func(p):
-    'factor : ID LPAREN expr_list RPAREN'
-    p[0] = Node('call', p[1], p[3])
 
 # error
 def p_error(p):
