@@ -52,6 +52,10 @@ class SemanticAnalyzer:
         for name_node in names:
             if isinstance(name_node, Node) and name_node.type == "id_array":
                 name = name_node.args[0]
+
+                if name == "MOD":
+                    raise Exception("MOD is a built-in function and cannot be declared")
+
                 size = self.extract_size(name_node.args[1])
                 size_type = self.visit(name_node.args[1]) # INT inside expr_list
                 if size_type != 'INTEGER':
@@ -60,6 +64,10 @@ class SemanticAnalyzer:
                 self.symtab.declare_array(name, typ, size)
             else:
                 name = self.get_name(name_node)
+
+                if name == "MOD":
+                    raise Exception("MOD is a built-in function and cannot be declared")
+
                 self.symtab.declare_var(name, typ)
     
     def extract_size(self, node): # extract array size
@@ -153,6 +161,22 @@ class SemanticAnalyzer:
 
     def visit_id_array(self, node):
         name = node.args[0]
+
+        # built-in MOD (special case)
+        if name == "MOD":
+            args = self.flatten_exprs(node.args[1])
+
+            if len(args) != 2:
+                raise Exception("MOD expects 2 arguments")
+
+            left = self.visit(args[0])
+            right = self.visit(args[1])
+
+            if left not in ['INTEGER', 'REAL'] or right not in ['INTEGER', 'REAL']:
+                raise Exception("MOD arguments must be numeric")
+
+            return 'INTEGER'
+
         index_expr = node.args[1]
         var = self.symtab.lookup(name)
 
@@ -165,6 +189,22 @@ class SemanticAnalyzer:
             raise Exception("Array index must be INTEGER")
 
         return var["type"]
+    
+    def flatten_exprs(self, node):
+        exprs = []
+
+        if node.type == "expr_list":
+            exprs.append(node.args[0])
+            exprs.extend(self.flatten_exprs(node.args[1]))
+
+        elif node.type == "more_exprs":
+            exprs.append(node.args[0])
+            exprs.extend(self.flatten_exprs(node.args[1]))
+
+        elif node.type == "empty":
+            return []
+
+        return exprs
 
     def visit_plus(self, node):
         left = self.visit(node.args[0])

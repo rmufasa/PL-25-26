@@ -40,44 +40,57 @@ class CodeGenerator:
         self.emit("STOP")
     
     def visit_decl(self, node):
-        id_list_node = node.args[1]
-
-        names = self.flatten_ids(id_list_node)
+        names = self.flatten_ids(node.args[1])
 
         for name_node in names:
-            if isinstance(name_node, Node):
+            if name_node.type == "id_array":
                 name = name_node.args[0]
+                size = self.symtab.lookup(name)["size"]
+                addr = self.symtab.lookup(name)["addr"]
 
-            entry = self.symtab.lookup(name)
-
-            if entry["kind"] == "var":
-                # allocate 1 slot initialized to 0
-                self.emit("PUSHI 0")
-
-            elif entry["kind"] == "array":
-                size = entry["size"]
-
-                # allocate N slots initialized to 0
-                self.emit(f"PUSHN {size}")
+                self.emit(f"PUSHI {size}")
+                self.emit("ALLOCN")
+                self.emit(f"STOREG {addr}")
 
             else:
-                raise Exception(f"Unknown declaration kind: {entry['kind']}")
+                name = name_node.args[0]
+                addr = self.symtab.lookup(name)["addr"]
+                self.emit("PUSHI 0")
+                self.emit(f"STOREG {addr}")
+    
+    def visit_stmt(self, node):
+        label = node.args[0]
+        body = node.args[1]
+
+        if not (isinstance(label, Node) and label.type == "empty"):
+            self.emit(f"{label}:")
+
+        self.visit(body)
     
     def visit_id(self, node):
         name = node.args[0]
         addr = self.symtab.lookup(name)["addr"]
-        self.emit(f"PUSHI {addr}")
+        self.emit(f"PUSHG {addr}")
     
     def visit_id_array(self, node):
         name = node.args[0]
         index = node.args[1]
+        
+        if name == "MOD":
+            args = self.flatten_exprs(index)
 
-        base = self.symtab.lookup(name)["addr"]
+            self.visit(args[0])  # n
+            self.visit(args[1])  # m
+            self.emit("MOD")
+        else:
+            addr = self.symtab.lookup(name)["addr"]
 
-        self.emit(f"PUSHI {base}")  # address first
-        self.visit(index)           # then offset
-        self.emit("PADD")
-        self.emit("LOAD 0")      
+            self.emit(f"PUSHG {addr}")   # heap address
+            self.visit(index)            # index
+            self.emit("PUSHI 1") # subtract 1 to get 0-based index
+            self.emit("SUB")
+            self.emit("PADD")
+            self.emit("LOAD 0")
 
     def visit_int(self, node):
         self.emit(f"PUSHI {node.args[0]}")
@@ -96,9 +109,8 @@ class CodeGenerator:
         var = node.args[0]
         expr = node.args[1]
 
-        self.visit(expr)
-
         if var.type == "id":
+            self.visit(expr)
             addr = self.symtab.lookup(var.args[0])["addr"]
             self.emit(f"STOREG {addr}")
 
@@ -106,13 +118,15 @@ class CodeGenerator:
             name = var.args[0]
             index = var.args[1]
 
-            base = self.symtab.lookup(name)["addr"]
+            addr = self.symtab.lookup(name)["addr"]
 
-            # value already on stack
+            self.emit(f"PUSHG {addr}")   # address FIRST
+            self.visit(index)            # index
+            self.emit("PUSHI 1") # subtract 1 to get 0-based index
+            self.emit("SUB")
+            self.emit("PADD")  # base + (i-1) 
+            self.visit(expr)   # value
 
-            self.emit(f"PUSHI {base}")
-            self.visit(index)
-            self.emit("PADD")
             self.emit("STORE 0")
 
     def visit_plus(self, node):
@@ -152,29 +166,51 @@ class CodeGenerator:
         ids = self.flatten_ids(node.args[0])
 
         for var in ids:
-            entry = self.symtab.lookup(var)
-            addr = entry["addr"]
-            typ = entry["type"]
+            if var.type == "id":
+                name = var.args[0]
+                entry = self.symtab.lookup(name)
+                addr = entry["addr"]
+                typ = entry["type"]
 
-            self.emit("READ")
+                self.emit("READ")
 
-            if typ == "INTEGER":
-                self.emit("ATOI")
+                if typ == "INTEGER":
+                    self.emit("ATOI")
+
+                elif typ == "REAL":
+                    self.emit("ATOF")
+
+                elif typ == "LOGICAL":
+                        self.emit("ATOI")  
+                
                 self.emit(f"STOREG {addr}")
+            elif var.type == "id_array":
+                name = var.args[0]
+                index = var.args[1]
 
-            elif typ == "REAL":
-                self.emit("ATOF")
-                self.emit(f"STOREG {addr}")
+                entry = self.symtab.lookup(name)
+                addr = entry["addr"]
+                typ = entry["type"]
 
-            elif typ == "STRING":
-                self.emit(f"STOREG {addr}")
+                # compute address properly
+                self.emit(f"PUSHG {addr}")
+                self.visit(index)
+                self.emit("PUSHI 1") # subtract 1 to get 0-based index
+                self.emit("SUB")
+                self.emit("PADD")  # base + (i-1)
 
-            elif typ == "LOGICAL":
-                    self.emit("ATOI")  
-                    self.emit(f"STOREG {addr}")
+                self.emit("READ")
+
+                if typ == "INTEGER":
+                    self.emit("ATOI")
+                elif typ == "REAL":
+                    self.emit("ATOF")
+
+                self.emit("STORE 0")
 
             else:
                 raise Exception(f"Unsupported READ type: {typ}")
+    
 
     def flatten_ids(self, node):
         names = []
@@ -287,7 +323,7 @@ class CodeGenerator:
         # condition check (I <= end)
         name = var.args[0]
         addr = self.symtab.lookup(name)["addr"]
-        self.emit(f"PUSHI {addr}")
+        self.emit(f"PUSHG {addr}")
         self.visit(end_expr)
         self.emit("INFEQ")            # I <= end
         self.emit(f"JZ {end_label}")
@@ -298,7 +334,7 @@ class CodeGenerator:
         # increment I = I + 1
         name = var.args[0]
         addr = self.symtab.lookup(name)["addr"]
-        self.emit(f"PUSHI {addr}")
+        self.emit(f"PUSHG {addr}")
         self.emit("PUSHI 1")
         self.emit("ADD")
         name = var.args[0]
@@ -310,3 +346,7 @@ class CodeGenerator:
 
         # end
         self.emit(f"{end_label}:")
+    
+    def visit_goto(self, node):
+        label = node.args[0]
+        self.emit(f"JUMP {label}")
