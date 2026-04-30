@@ -57,9 +57,6 @@ def t_CONTINUE(t):   r'CONTINUE';   return t
 def t_GOTO(t):       r'GOTO';       return t
 def t_READ(t):       r'READ';       return t
 def t_PRINT(t):      r'PRINT';      return t
-def t_FUNCTION(t):   r'FUNCTION';   return t
-def t_SUBROUTINE(t): r'SUBROUTINE'; return t
-def t_RETURN(t):     r'RETURN';     return t
 def t_END(t):        r'END';        return t
 def t_BOOL(t): r'\.(TRUE|FALSE)\.'; return t
 

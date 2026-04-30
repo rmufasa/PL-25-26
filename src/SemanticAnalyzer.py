@@ -52,11 +52,24 @@ class SemanticAnalyzer:
         for name_node in names:
             if isinstance(name_node, Node) and name_node.type == "id_array":
                 name = name_node.args[0]
-                size = name_node.args[1].args[0]  # INT inside expr_list
+                size = self.extract_size(name_node.args[1])
+                size_type = self.visit(name_node.args[1]) # INT inside expr_list
+                if size_type != 'INTEGER':
+                    print(size_type)
+                    raise Exception("Array size must be constant integer")  
                 self.symtab.declare_array(name, typ, size)
             else:
                 name = self.get_name(name_node)
                 self.symtab.declare_var(name, typ)
+    
+    def extract_size(self, node): # extract array size
+        if node.type == "int":
+            return node.args[0]
+
+        if node.type == "expr_list" or node.type == "expression" or node.type == "term" or node.type == "factor":
+            return self.extract_size(node.args[0])
+
+        raise Exception("Array size must be a constant integer expression")
 
     def extract_ids(self, node):
         names = []
@@ -88,21 +101,33 @@ class SemanticAnalyzer:
 
     # assignment checking
     def visit_assign(self, node):
-        var_name = node.args[0]
+        var_node = node.args[0]
         expr_node = node.args[1]
 
-        # check variable exists
-        var_type = self.symtab.lookup(var_name)["type"]
+        var_name = self.get_name(var_node)
+        var_info = self.symtab.lookup(var_name)
 
-        # evaluate expression type
+        # array vs scalar
+        if var_node.type == "id_array":
+            if var_info["kind"] != "array":
+                raise Exception(f"{var_name} is not an array")
+
+        elif var_node.type == "id":
+            if var_info["kind"] == "array":
+                raise Exception(f"{var_name} is an array (missing index)")
+
+        else:
+            raise Exception("Invalid assignment target")
+
+        # type check
+        var_type = var_info["type"]
         expr_type = self.visit(expr_node)
 
         if var_type == 'REAL' and expr_type == 'INTEGER':
             return
 
-        # check compatibility
         if var_type != expr_type:
-            raise Exception(f"Type error: cannot assign {expr_type} to {var_type}")            
+            raise Exception(f"Type error: cannot assign {expr_type} to {var_type}")          
 
     # expression typing
     def visit_int(self, node):
@@ -119,12 +144,16 @@ class SemanticAnalyzer:
 
     def visit_id(self, node):
         name = node.args[0]
-        return self.symtab.lookup(name)["type"]
+        var = self.symtab.lookup(name)
+
+        if var["kind"] == "array":
+            raise Exception(f"{name} is an array (missing index)")
+
+        return var["type"]
 
     def visit_id_array(self, node):
         name = node.args[0]
         index_expr = node.args[1]
-
         var = self.symtab.lookup(name)
 
         if var["kind"] != "array":
@@ -134,9 +163,6 @@ class SemanticAnalyzer:
         index_type = self.visit(index_expr)
         if index_type != "INTEGER":
             raise Exception("Array index must be INTEGER")
-
-        if isinstance(index_expr, int) and (index_expr < 1 or index_expr > var["size"]):
-            raise Exception("Array index out of bounds")
 
         return var["type"]
 
@@ -183,6 +209,12 @@ class SemanticAnalyzer:
         if 'REAL' in (left, right):
             return 'REAL'
         return 'INTEGER'
+
+    def visit_uminus(self, node):
+        t = self.visit(node.args[0])
+        if t not in ['INTEGER', 'REAL']:
+            raise Exception("Unary minus requires numeric type")
+        return t
     
     def visit_and(self, node):
         left = self.visit(node.args[0])
@@ -267,7 +299,8 @@ class SemanticAnalyzer:
 
     def visit_read(self, node):
         names = self.extract_ids(node.args[0])
-        for name in names:
+        for name_node in names:
+            name = self.get_name(name_node)
             self.symtab.lookup(name)
 
     def visit_goto(self, node):
@@ -275,3 +308,17 @@ class SemanticAnalyzer:
 
         if label not in self.labels:
             raise Exception(f"GOTO to undefined label {label}")
+
+    # intermediates
+    def visit_expression(self, node):
+        return self.visit(node.args[0])
+
+    def visit_term(self, node):
+        return self.visit(node.args[0])
+
+    def visit_factor(self, node):
+        return self.visit(node.args[0])
+
+    def visit_expr_list(self, node):
+        # Usually, for array sizes, there is only one expression in the list
+        return self.visit(node.args[0])

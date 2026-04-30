@@ -42,13 +42,16 @@ def p_more_ids_empty(p):
     p[0] = Node('empty')
 
 def p_id_element(p):
-    '''id_element : ID 
+    '''id_element : id_literal 
                   | ID LPAREN expr_list RPAREN'''
     if len(p) == 2:
-        p[0] = Node('id', p[1])
+        p[0] = p[1] 
     else:
         p[0] = Node('id_array', p[1], p[3])
 
+def p_id_literal(p): 
+    '''id_literal : ID''' # in do loop array element as iterator is not syntatically valid so this must be used
+    p[0] = Node('id', p[1])
 
 # statements
 def p_stmt_list_recursive(p):
@@ -83,7 +86,7 @@ def p_basic_statement(p):
 
 # assignment
 def p_assignment(p):
-    'assignment : ID ASSIGN expression'
+    'assignment : id_element ASSIGN condition'
     p[0] = Node('assign', p[1], p[3])
 
 # print/read
@@ -112,7 +115,7 @@ def p_more_exprs_empty(p):
 
 # do loop
 def p_do_loop(p):
-    'do_loop : DO INT ID ASSIGN expression COMMA expression stmt_list INT CONTINUE'
+    'do_loop : DO INT id_literal ASSIGN expression COMMA expression stmt_list INT CONTINUE'
     p[0] = Node('do', p[2], p[3], p[5], p[7], p[8], p[9])
 
 # if statement
@@ -259,6 +262,10 @@ def p_factor_string(p):
 def p_factor_paren(p):
     'factor : LPAREN condition RPAREN'
     p[0] = p[2]
+
+def p_factor_uminus(p):
+    'factor : MINUS factor'
+    p[0] = Node('uminus', p[2])
 
 # error
 def p_error(p):
