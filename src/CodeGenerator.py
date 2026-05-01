@@ -102,7 +102,7 @@ class CodeGenerator:
         self.emit(f'PUSHS "{node.args[0]}"')
 
     def visit_bool(self, node):
-        val = 1 if node.args[0] else 0
+        val = 1 if node.args[0] == '.TRUE.' else 0
         self.emit(f"PUSHI {val}") 
 
     def visit_assign(self, node):
