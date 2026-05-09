@@ -1,0 +1,20 @@
+PROGRAM LOOP_BOOL
+INTEGER I
+LOGICAL FLAG
+
+I = 1
+FLAG = .TRUE.
+
+10 IF (I .LE. 5 .AND. FLAG) THEN
+    PRINT *, I
+
+    IF (I .EQ. 3) THEN
+        FLAG = .FALSE.
+    ENDIF
+
+    I = I + 1
+    GOTO 10
+ENDIF
+
+PRINT *, 'DONE'
+END

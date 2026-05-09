@@ -1,0 +1,56 @@
+PROGRAM FULLTEST
+INTEGER I, J, S, A(5)
+LOGICAL OK
+
+PRINT *, 'START'
+
+S = 0
+OK = .TRUE.
+
+READ *, J
+
+DO 10 I = 1, 5
+    A(I) = I * J
+    S = S + A(I)
+10 CONTINUE
+
+PRINT *, 'SUM = ', S
+
+IF (S .GT. 50 .AND. OK) THEN
+    PRINT *, 'BIG SUM'
+ELSE
+    PRINT *, 'SMALL SUM'
+ENDIF
+
+IF (.NOT. OK .OR. S .EQ. 0) THEN
+    PRINT *, 'INVALID STATE'
+ELSE
+    PRINT *, 'STATE OK'
+ENDIF
+
+I = 1
+
+20 IF (I .LE. 5) THEN
+
+    IF (A(I) .EQ. J .OR. A(I) .GT. 10) THEN
+        PRINT *, I, ' SPECIAL'
+    ELSE
+        PRINT *, I, ' NORMAL'
+    ENDIF
+
+    IF (I .EQ. 3) THEN
+        OK = .FALSE.
+    ENDIF
+
+    I = I + 1
+    GOTO 20
+
+ENDIF
+
+IF (OK) THEN
+    PRINT *, 'FINISHED CLEAN'
+ELSE
+    PRINT *, 'FINISHED DIRTY'
+ENDIF
+
+END
