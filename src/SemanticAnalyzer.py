@@ -1,5 +1,13 @@
 from utils.AST import Node
-from SymbolTable import SymbolTable
+from utils.SymbolTable import SymbolTable
+
+"""
+===============================================================================
+
+	Semantic Analyser
+ 
+===============================================================================
+"""
 
 class SemanticAnalyzer:
     def __init__(self):

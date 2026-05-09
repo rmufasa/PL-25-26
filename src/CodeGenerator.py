@@ -1,18 +1,21 @@
 from utils.AST import Node
 
+"""
+===============================================================================
+
+	Code Generator
+ 
+===============================================================================
+"""
+
 class CodeGenerator:
     def __init__(self, symtab):
         self.symtab = symtab # symbol table
         self.code = [] # instructions
-        self.temp_counter = 0
         self.label_counter = 0
 
     def emit(self, instr):
         self.code.append(instr)
-
-    def new_temp(self):
-        self.temp_counter += 1
-        return f"t{self.temp_counter}"
 
     def new_label(self):
         self.label_counter += 1
@@ -350,3 +353,8 @@ class CodeGenerator:
     def visit_goto(self, node):
         label = node.args[0]
         self.emit(f"JUMP {label}")
+
+    def visit_uminus(self, node):
+        self.visit(node.args[0])
+        self.emit("PUSHI -1")
+        self.emit("MUL")
