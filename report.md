@@ -246,7 +246,9 @@ As instruções suportadas são:
 Mais uma vez note-se que no ciclo `do` é apenas sintaticamente válido atribuir um `id_literal` como iterador. O parser necessita de algum tipo de delimitador para saber quando exatamente esta produção termina. Neste caso o delimitador foi a parte final `INT CONTINUE` já que os exemplos padrão não utilizam um delimitador `ENDDO`. Colocar o statement final apenas como a regra `continue_stmt` também não foi viável devido à origem de conflitos já que essa opção traria a ambiguidade de o parser não saber se a instrução faz parte da `stmt_list` do loop ou se é o seu delimitador.
 
 `if_stmt : IF LPAREN condition RPAREN THEN stmt_list else_part ENDIF`
+
 `else_part : ELSE stmt_list`
+
 `else_part :`
 
 Como podemos ver, no caso do `if` já existe o delimitador `ENDIF`.
